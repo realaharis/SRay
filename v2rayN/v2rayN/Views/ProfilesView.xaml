@@ -19,10 +19,11 @@
         <BooleanToVisibilityConverter x:Key="BoolToVisConverter" />
         <conv:DelayColorConverter x:Key="DelayColorConverter" />
     </UserControl.Resources>
-    <Grid>
+    <Grid Background="#101019">
+        <Border Margin="10,4,10,10" Background="#171522" BorderBrush="#302745" BorderThickness="1" CornerRadius="12" Padding="8">
         <DockPanel>
             <DockPanel DockPanel.Dock="Top" Margin="12,10,12,6" LastChildFill="False">
-                <TextBlock Text="Server List" FontSize="16" FontWeight="SemiBold" VerticalAlignment="Center" />
+                <TextBlock Text="Server List" Foreground="#F4F0FF" FontSize="16" FontWeight="SemiBold" VerticalAlignment="Center" />
                 <ScrollViewer DockPanel.Dock="Right" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled" MaxWidth="480"><StackPanel x:Name="countryFilters" Orientation="Horizontal" /></ScrollViewer>
             </DockPanel>
             <WrapPanel Margin="{StaticResource Margin4}" DockPanel.Dock="Top">
@@ -371,5 +372,6 @@
                 </DataGrid.Columns>
             </DataGrid>
         </DockPanel>
+        </Border>
     </Grid>
 </reactiveui:ReactiveUserControl>
