@@ -9,6 +9,7 @@ permissions:
 jobs:
   windows:
     runs-on: windows-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-dotnet@v4
@@ -18,6 +19,8 @@ jobs:
         run: dotnet run --project tests/ProfileCountry.Checks
       - name: Build native WPF
         run: dotnet build v2rayN/v2rayN/v2rayN.csproj -c Release -r win-x64
+      - name: Check WPF selection restoration
+        run: dotnet run --project tests/Wpf.Selection.Checks -c Release
       - name: Publish application (engine binaries require upstream packaging)
         run: dotnet publish v2rayN/v2rayN/v2rayN.csproj -c Release -r win-x64 --self-contained true -o artifacts/SRay
       - uses: actions/upload-artifact@v4
