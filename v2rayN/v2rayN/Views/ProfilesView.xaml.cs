@@ -20,7 +20,7 @@ public partial class ProfilesView
         _config = AppManager.Instance.Config;
 
         btnAutofitColumnWidth.Click += BtnAutofitColumnWidth_Click;
-        txtServerFilter.PreviewKeyDown += TxtServerFilter_PreviewKeyDown;
+
         lstProfiles.PreviewKeyDown += LstProfiles_PreviewKeyDown;
         lstProfiles.SelectionChanged += LstProfiles_SelectionChanged;
         lstProfiles.LoadingRow += LstProfiles_LoadingRow;
@@ -42,7 +42,20 @@ public partial class ProfilesView
 
             this.OneWayBind(ViewModel, vm => vm.SubItems, v => v.lstGroup.ItemsSource).DisposeWith(disposables);
             this.Bind(ViewModel, vm => vm.SelectedSub, v => v.lstGroup.SelectedItem).DisposeWith(disposables);
-            this.Bind(ViewModel, vm => vm.ServerFilter, v => v.txtServerFilter.Text).DisposeWith(disposables);
+            ViewModel.ServerFilter = string.Empty;
+            _countryView = CollectionViewSource.GetDefaultView(ViewModel.ProfileItems);
+            _countryView.Filter = item => item is ProfileItemModel p &&
+                (_country == "" || ProfileCountry.GetCode(p.IpInfo, p.Remarks) == _country);
+            ViewModel.ProfileItems.CollectionChanged += CountryProfilesChanged;
+            ObserveCountryProfiles();
+            RebuildCountryFilters();
+            new CountryCleanup(() =>
+            {
+                ViewModel.ProfileItems.CollectionChanged -= CountryProfilesChanged;
+                foreach (var item in _observedProfiles) item.PropertyChanged -= CountryProfileChanged;
+                _observedProfiles.Clear();
+                _countryView.Filter = null;
+            }).DisposeWith(disposables);
             this.BindCommand(ViewModel, vm => vm.AddSubCmd, v => v.btnAddSub).DisposeWith(disposables);
             this.BindCommand(ViewModel, vm => vm.EditSubCmd, v => v.btnEditSub).DisposeWith(disposables);
 
@@ -152,6 +165,73 @@ public partial class ProfilesView
         });
 
         RestoreUI();
+    }
+
+    private sealed class CountryCleanup(Action cleanup) : IDisposable
+    {
+        public void Dispose() => cleanup();
+    }
+
+    private ICollectionView? _countryView;
+    private string _country = "";
+    private readonly HashSet<string> _rememberedSelection = [];
+    private readonly HashSet<ProfileItemModel> _observedProfiles = [];
+
+    private void ObserveCountryProfiles()
+    {
+        foreach (var old in _observedProfiles) old.PropertyChanged -= CountryProfileChanged;
+        _observedProfiles.Clear();
+        foreach (var item in ViewModel.ProfileItems)
+        {
+            _observedProfiles.Add(item);
+            item.PropertyChanged += CountryProfileChanged;
+        }
+    }
+
+    private void CountryProfilesChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+    {
+        ObserveCountryProfiles();
+        RebuildCountryFilters();
+    }
+
+    private void CountryProfileChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(ProfileItemModel.IpInfo))
+            Dispatcher.InvokeAsync(() => { ApplyCountryFilter(); RebuildCountryFilters(); });
+    }
+
+    private void ApplyCountryFilter(string? code = null)
+    {
+        if (_countryView == null) return;
+        foreach (ProfileItemModel item in lstProfiles.Items) _rememberedSelection.Remove(item.IndexId);
+        foreach (ProfileItemModel item in lstProfiles.SelectedItems) _rememberedSelection.Add(item.IndexId);
+        if (code != null) _country = code;
+        _countryView.Refresh();
+        foreach (ProfileItemModel item in lstProfiles.Items)
+            if (_rememberedSelection.Contains(item.IndexId)) lstProfiles.SelectedItems.Add(item);
+    }
+
+    private void RebuildCountryFilters()
+    {
+        countryFilters.Children.Clear();
+        var codes = ViewModel.ProfileItems.Select(p => ProfileCountry.GetCode(p.IpInfo, p.Remarks)).Distinct().OrderBy(c => c).ToList();
+        if (_country != "" && !codes.Contains(_country)) ApplyCountryFilter("");
+        foreach (var code in new[] { "" }.Concat(codes))
+        {
+            object content = new TextBlock { Text = code == "" ? "◎" : code, FontSize = 10, Width = 16, TextAlignment = TextAlignment.Center };
+            if (code.Length == 2)
+                content = new Image { Width = 16, Height = 12, Source = new System.Windows.Media.Imaging.BitmapImage(new Uri($"pack://application:,,,/Resources/Flags/{code.ToLowerInvariant()}.png")) };
+            var button = new Button
+            {
+                Content = content, Padding = new Thickness(2), MinWidth = 0, Width = 24, Height = 24,
+                Margin = new Thickness(6, 0, 0, 0), BorderThickness = new Thickness(0),
+                Background = code == _country ? new SolidColorBrush(Color.FromRgb(108, 65, 170)) : Brushes.Transparent,
+                ToolTip = code == "" ? "All countries" : code == "?" ? "Unknown country" : $"{code}: cached egress test or profile flag; label location is unverified",
+            };
+            System.Windows.Automation.AutomationProperties.SetName(button, button.ToolTip.ToString());
+            button.Click += (_, _) => { ApplyCountryFilter(code); RebuildCountryFilters(); };
+            countryFilters.Children.Add(button);
+        }
     }
 
     #region Event

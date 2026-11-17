@@ -1,0 +1,26 @@
+name: SRay Windows x64
+on:
+  push:
+    branches: [feature/sray-windows-ui]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - name: Check country grouping
+        run: dotnet run --project tests/ProfileCountry.Checks
+      - name: Build native WPF
+        run: dotnet build v2rayN/v2rayN/v2rayN.csproj -c Release -r win-x64
+      - name: Publish application (engine binaries require upstream packaging)
+        run: dotnet publish v2rayN/v2rayN/v2rayN.csproj -c Release -r win-x64 --self-contained true -o artifacts/SRay
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SRay-2.1-windows-x64-app
+          path: artifacts/SRay

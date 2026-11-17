@@ -24,6 +24,8 @@ public partial class ThemeSettingViewModel : MyReactiveObject
     {
         _config = AppManager.Instance.Config;
 
+        _config.UiItem.CurrentTheme ??= nameof(ETheme.Dark);
+        _config.UiItem.ColorPrimaryName ??= "deeppurple";
         RegisterSystemColorSet(_config, ModifyTheme);
 
         BindingUI();

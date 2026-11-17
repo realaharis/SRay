@@ -1,0 +1,1 @@
+Flag images derived from https://github.com/hampusborgos/country-flags (public domain flag artwork). Rasterized locally at 32px and displayed at 16px.

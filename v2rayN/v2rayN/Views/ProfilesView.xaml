@@ -21,6 +21,10 @@
     </UserControl.Resources>
     <Grid>
         <DockPanel>
+            <DockPanel DockPanel.Dock="Top" Margin="12,10,12,6" LastChildFill="False">
+                <TextBlock Text="Server List" FontSize="16" FontWeight="SemiBold" VerticalAlignment="Center" />
+                <ScrollViewer DockPanel.Dock="Right" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled" MaxWidth="480"><StackPanel x:Name="countryFilters" Orientation="Horizontal" /></ScrollViewer>
+            </DockPanel>
             <WrapPanel Margin="{StaticResource Margin4}" DockPanel.Dock="Top">
                 <ListBox
                     x:Name="lstGroup"
@@ -57,16 +61,7 @@
                     <materialDesign:PackIcon VerticalAlignment="Center" Kind="Plus" />
                 </Button>
 
-                <TextBox
-                    x:Name="txtServerFilter"
-                    Width="200"
-                    Margin="{StaticResource MarginLeftRight4}"
-                    VerticalContentAlignment="Center"
-                    materialDesign:HintAssist.Hint="{x:Static resx:ResUI.MsgServerTitle}"
-                    materialDesign:TextFieldAssist.HasClearButton="True"
-                    AutomationProperties.Name="{x:Static resx:ResUI.MsgServerTitle}"
-                    Style="{StaticResource DefTextBox}"
-                    ToolTip="{x:Static resx:ResUI.MsgServerTitle}" />
+
 
                 <Button
                     x:Name="btnAutofitColumnWidth"
@@ -108,7 +103,7 @@
                 CanUserSortColumns="False"
                 EnableRowVirtualization="True"
                 Focusable="True"
-                GridLinesVisibility="All"
+                GridLinesVisibility="None"
                 HeadersVisibility="All"
                 IsReadOnly="True"
                 RowHeaderWidth="40"
